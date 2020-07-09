@@ -21,7 +21,7 @@ const storage = multer.memoryStorage({
 
 const upload = multer({storage}).single('image')
 
-app.post('/upload', upload, (req, res) => {
+app.post('/aws/api/upload', upload, (req, res) => {
 
     let myFile = req.file.originalname.split(".")
     const fileType = myFile[myFile.length - 1]
@@ -39,6 +39,27 @@ app.post('/upload', upload, (req, res) => {
 
         res.status(200).send(data)
     })
+})
+
+app.get('/aws/api',  (req, res) => {
+
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME
+    }
+    let keys = []
+
+    try {
+      s3.listObjectsV2(params, (err, data) => {
+        if (err) {
+          res.status(404).send('Sorry, cant find that: ' + err)
+        }
+        let contents = data.Contents
+        contents.forEach((content) => keys.push(content.Key))
+        res.send(keys)
+      })
+    } catch (e) {
+      console.log('out error: ', e)
+    }
 })
 
 app.listen(port, () => {
